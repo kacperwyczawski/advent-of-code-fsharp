@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AdventOfCode2022", "AdventOfCode2022\AdventOfCode2022.fsproj", "{D7D4C2A3-61EF-4F30-BCF4-F6AF54370CE7}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Day1", "Day1\Day1.fsproj", "{D7D4C2A3-61EF-4F30-BCF4-F6AF54370CE7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
