@@ -29,6 +29,12 @@ let allElves =
 let winner = allElves |> List.max
 
 printfn
-    "#%d elf is carrying most calories: %d"
+    "Part 1: #%d elf is carrying most calories: %d"
     (allElves |> List.findIndex (fun x -> x = winner) |> (fun x -> x + 1))
     winner
+    
+let topThree = allElves |> List.sortDescending |> List.take 3 |> List.sum
+
+printfn
+    "Part 2: Top three elves are carrying most calories: %d"
+    topThree
