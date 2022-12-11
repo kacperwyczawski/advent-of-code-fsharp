@@ -1,18 +1,7 @@
-﻿let input =
-    [ "1000"
-      "2000"
-      "3000"
-      ""
-      "4000"
-      ""
-      "5000"
-      "6000"
-      ""
-      "7000"
-      "8000"
-      "9000"
-      ""
-      "10000" ]
+﻿open System
+open System.IO
+
+let input = File.ReadAllLines $@"C:\Users\{Environment.UserName}\Desktop\input.txt" |> Array.toList
 
 let parseInput input =
     List.map (fun s -> if s = "" then None else Some(int s)) input
