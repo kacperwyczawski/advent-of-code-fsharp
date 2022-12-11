@@ -14,37 +14,22 @@
       ""
       "10000" ]
 
-let rec splitList (calories: string list) : string list list =
-    let rec splitOne (acc: string list) (list: string list) : string list * string list =
-        match list with
-        // return if there is no more elements
-        | [] -> (acc, list)
-        | head :: tail ->
-            if head = "" then
-                // if encounter empty string, return (without empty string)
-                printfn "splitOne: empty string encountered, returning %A and %A" acc list.Tail
-                (acc, list.Tail)
+let splitList (calories: string list) : string list list =
+    let result = 
+        calories
+        |> List.fold (fun (acc: string list list) (calorie: string) ->
+            if calorie = "" then
+                // append new empty list to acc
+                [] :: acc
             else
-                // add head to accumulator
-                printfn "splitOne: adding %A to accumulator" head
-                splitOne (head :: acc) tail
-
-    let rec splitAll (acc: string list list) (list: string list) : string list list =
-        if list = [] then
-            // return if there is no more elements
-            printfn "splitAll: no more elements, returning %A" acc
-            acc
-        else
-            let oneElf, rest = splitOne [] list
-            // add elf's calories array to accumulator
-            printfn "splitAll: adding %A to accumulator" oneElf
-            splitAll (oneElf :: acc) rest
-
-    let result =
-        calories |> splitAll [] |> List.rev
-
-    printfn "splitList: returning %A" result
-    result
+                match acc with
+                // if acc is empty, append new list with calorie to acc
+                | [] -> [[calorie]]
+                // append calorie to first list in acc (which is the last list modified)
+                | head :: tail -> (calorie :: head) :: tail
+            ) []
+        
+    result |> List.rev
 
 let allElves =
     input
