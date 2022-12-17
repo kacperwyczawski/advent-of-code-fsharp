@@ -36,11 +36,24 @@ let getPriority item =
     elif value >= 97 && value <= 122 then value - 96
     else failwith "Invalid item category"
 
-let intersect backpack =
+let intersect (backpack: Backpack): Item list =
     let firstCompartment = backpack.firstCompartment.items |> Set.ofList
     let secondCompartment = backpack.secondCompartment.items |> Set.ofList
 
     (Set.intersect firstCompartment secondCompartment) |> Set.toList
+
+// find common items between all backpacks  
+let intersectGroup (backpacks: Backpack list): Item list =
+    
+    let joinBackpack backpack = backpack.firstCompartment.items @ backpack.secondCompartment.items
+    
+    backpacks
+    |> Seq.map joinBackpack
+    |> Seq.map Set.ofList
+    |> Set.ofSeq
+    |> Set.intersectMany
+    |> Set.toList
+    
 
 let solution =
     input
@@ -51,3 +64,14 @@ let solution =
     |> List.sum
 
 printfn "%d" solution
+
+let solution2: int =
+    input
+    |> parseInput
+    |> List.chunkBySize 3
+    |> List.map intersectGroup
+    |> List.concat
+    |> List.map getPriority
+    |> List.sum
+    
+printfn "%d" solution2
