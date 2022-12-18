@@ -30,7 +30,20 @@ let fullyContains pair =
 
     smaller.sectionStart >= larger.sectionStart
     && smaller.sectionEnd <= larger.sectionEnd
+    
+let overlaps pair =
+    let smaller, larger = pair |> orderBySize
+
+    let between x lower upper =
+        x >= lower && x <= upper
+    
+    between smaller.sectionStart larger.sectionStart larger.sectionEnd
+    || between smaller.sectionEnd larger.sectionStart larger.sectionEnd
 
 let solution = input |> parseInput |> List.filter fullyContains |> List.length
 
 printfn "%d" solution
+
+let solution2 = input |> parseInput |> List.filter overlaps |> List.length
+
+printfn "%d" solution2
