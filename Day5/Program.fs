@@ -92,18 +92,26 @@ let parseInputLine (line: string) =
     { crateCount = int split[1]
       fromStack = int split[3]
       toStack = int split[5] }
+    
+type Crane = CrateMover9000 | CrateMover9001
 
-let executeMove (yard: Yard) (move: Move) : Yard =
+let executeMove (crane: Crane) (yard: Yard) (move: Move) : Yard =
     // 1. take crates from stack
     // 2. reverse crates
     // 3. put crates on stack
 
-    let payload =
+    let getPayload =
         yard.stacks
         |> List.find (fun s -> s.number = move.fromStack) // select stack to move from
         |> fun s -> s.crates // unwrap the stack
         |> List.rev // reverse crates in stack
         |> List.take move.crateCount // take crates from the end
+        |> List.rev // reverse crates again
+        
+    let payload =
+        match crane with
+        | CrateMover9000 -> List.rev getPayload
+        | CrateMover9001 -> getPayload
 
     let resultYard =
         { yard with
@@ -121,9 +129,15 @@ let executeMove (yard: Yard) (move: Move) : Yard =
 
 let parsedInput = input |> List.map parseInputLine
 
-let finalYard = parsedInput |> List.fold executeMove yard
+let part1Yard = parsedInput |> List.fold (executeMove CrateMover9000) yard
+let part2Yard = parsedInput |> List.fold (executeMove CrateMover9001) yard
 
-finalYard.stacks
-|> List.map (fun stack -> List.last stack.crates) // get last crate of each stack
-|> List.map (fun crate -> crate.name) // get name of each crate
-|> List.iter (printf "%c") // print each name
+let getAnswer yard =
+    yard.stacks
+    |> List.map (fun stack -> List.last stack.crates) // get last crate of each stack
+    |> List.map (fun crate -> crate.name) // get name of each crate
+    |> Array.ofList // convert to array
+    |> String // convert to string
+    
+printfn "Part 1: %s" (getAnswer part1Yard)
+printfn "Part 2: %s" (getAnswer part2Yard)
