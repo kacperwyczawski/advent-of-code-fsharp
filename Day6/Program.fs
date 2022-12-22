@@ -1,7 +1,8 @@
 ﻿open System
 open System.IO
+open Utilities
 
-let input = File.ReadAllLines $@"C:\Users\{Environment.UserName}\Desktop\input.txt" |> Array.exactlyOne
+let input = Input.loadText
 
 let signalSubroutine markerLength signal =
     let rec loop (index: int) (acc: char list) : int =
