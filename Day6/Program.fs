@@ -3,10 +3,10 @@ open System.IO
 
 let input = File.ReadAllLines $@"C:\Users\{Environment.UserName}\Desktop\input.txt" |> Array.exactlyOne
 
-let signalSubroutine signal =
+let signalSubroutine markerLength signal =
     let rec loop (index: int) (acc: char list) : int =
-        if [ acc[0]; acc[1]; acc[2]; acc[3] ] |> List.distinct |> List.length = 4 then
-            index + 4
+        if acc |> List.take markerLength |> List.distinct |> List.length = markerLength then
+            index + markerLength
         else
             loop (index + 1) (List.tail acc)
             
@@ -14,5 +14,10 @@ let signalSubroutine signal =
 
 input
 |> List.ofSeq
-|> signalSubroutine
-|> printfn "%d"
+|> signalSubroutine 4
+|> printfn "Part 1: %d"
+
+input
+|> List.ofSeq
+|> signalSubroutine 14
+|> printfn "Part 2: %d"
