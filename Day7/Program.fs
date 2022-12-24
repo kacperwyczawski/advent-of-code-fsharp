@@ -44,11 +44,21 @@ let parseLine (fileSystem: FileSystem) (line: string) : FileSystem =
 
 let emptyFileSystem = { CurrentPath = []; Items = Map.empty }
 
-let solution =
+let sizesOfDirectories =
     input
     |> List.fold parseLine emptyFileSystem
     |> fun fs -> fs.Items |> Map.values
-    |> Seq.filter (fun size -> size < 100000)
-    |> Seq.sum
     
-printfn "%d" solution
+sizesOfDirectories
+|> Seq.filter (fun s -> s < 100000)
+|> Seq.sum
+|> printfn "Part 1: %d"
+
+let diskSpace = 70_000_000
+let updateSize = 30_000_000
+let freeSpace = diskSpace - (sizesOfDirectories |> Seq.max)
+
+sizesOfDirectories
+|> Seq.filter (fun s -> s > updateSize - freeSpace)
+|> Seq.min
+|> printfn "Part 2: %d"
