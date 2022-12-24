@@ -1,122 +1,54 @@
-﻿// thanks to https://github.com/gustavgahm for the idea of using Map of path and items to represent file system
-
-open System.Text.RegularExpressions
-open Utilities
+﻿open Utilities
 
 let input = Input.loadLines
 
-type File = { Name: string; Size: int }
-type Directory = { Name: string }
-
-type FileSystemItem =
-    | File of File
-    | Directory of Directory
-
-type Path = Path of string list
-
-let goBack path =
-    match path with
-    | Path (_ :: tail) -> Path tail
-    | _ -> path
-
-let goTo name path =
-    match path with
-    | Path p -> Path(name :: p)
-    
-let isChildOf parent child =
-    let endsWith (ending: 'a list) (list: 'a list): bool =
-        (list |> List.rev |> List.take (List.length ending) |> List.rev) = ending
-    
-    match parent, child with
-    | Path p, Path c -> c |> endsWith p
-
+// list string is used to represent path
 type FileSystem =
-    { CurrentPath: Path
-      Items: Map<Path, FileSystemItem list> }
+    { CurrentPath: string list
+      Items: Map<string list, int> }
 
-let addToFileSystem fileSystem path item =
-    let items = fileSystem.Items |> Map.tryFind path
+// we take path from current path in file system
+let addSize (size: int) (fileSystem: FileSystem) : FileSystem =
+    // example: [ "a"; "b"; "/" ] -> [ [ "a"; "b"; "/" ]; [ "b"; "/" ]; [ "/" ] ]
+    let breakPath (path: 'a list) : 'a list list =
+        let rec loop (path: 'a list) (acc: 'a list list) : 'a list list =
+            match path with
+            | [] -> acc
+            | _ -> loop (List.tail path) (path :: acc)
 
-    let updatedItems =
-        match items with
-        | Some items -> items @ [ item ]
-        | None -> [ item ]
+        loop path []
 
-    { fileSystem with Items = Map.add path updatedItems fileSystem.Items }
+    // folder
+    let addSizeToPath (size: int) (fileSystem: FileSystem) (path: string list) : FileSystem =
+        let updateSize =
+            function
+            | Some currentSize -> Some(currentSize + int size)
+            | None -> Some(int size)
 
-let emptyFileSystem =
-    { CurrentPath = Path []
-      Items = Map.empty }
+        { fileSystem with Items = fileSystem.Items |> Map.change path updateSize }
 
-// types of lines:
-// $ cd <name>
-// $ ls
-// dir <name>
-// <size> <name>
+    let folder = addSizeToPath size
 
-// active patterns
-let (|ChangeDirectory|_|) (str: string) =
-    if str.StartsWith "$ cd " then
-        Some(str.Substring 5)
-    else
-        None
+    fileSystem.CurrentPath |> breakPath |> List.fold folder fileSystem
 
-let (|ListItems|_|) (str: string) = if str = "$ ls" then Some() else None
+let parseLine (fileSystem: FileSystem) (line: string) : FileSystem =
+    let split = line.Split(' ') |> List.ofArray
 
-let (|Directory|_|) (str: string) =
-    if str.StartsWith("dir ") then
-        let dir = { Name = str.Substring(4) }
-        FileSystemItem.Directory(dir) |> Some
-    else
-        None
+    match split with
+    | [ "$"; "cd"; ".." ] -> { fileSystem with CurrentPath = fileSystem.CurrentPath |> List.tail }
+    | [ "$"; "cd"; name ] -> { fileSystem with CurrentPath = name :: fileSystem.CurrentPath }
+    | [ "$"; "ls" ] -> fileSystem
+    | [ "dir"; _ ] -> fileSystem
+    | [ size; _ ] -> fileSystem |> addSize (int size)
+    | _ -> failwithf "Unknown line: %s" line
 
-let (|File|_|) (str: string) =
-    let regexMatch = Regex(@"(\d+) (.+)").Match(str)
+let emptyFileSystem = { CurrentPath = []; Items = Map.empty }
 
-    if regexMatch.Success then
-        let size: int = int (regexMatch.Groups.[1].Value)
-        let name: string = regexMatch.Groups.[2].Value
-        let file = { Name = name; Size = size }
-        FileSystemItem.File(file) |> Some
-    else
-        None
-
-let processLine fileSystem line =
-    match line with
-    | ChangeDirectory name ->
-        if name = ".." then
-            { fileSystem with CurrentPath = fileSystem.CurrentPath |> goBack }
-        else
-            { fileSystem with CurrentPath = fileSystem.CurrentPath |> goTo name }
-    | ListItems -> fileSystem
-    | Directory dir -> addToFileSystem fileSystem fileSystem.CurrentPath dir
-    | File file -> addToFileSystem fileSystem fileSystem.CurrentPath file
-    | other -> other |> sprintf "Unrecognized command: `%s`" |> failwith
-
-let fileSystem = input |> List.fold processLine emptyFileSystem
-
-let shallowSize =
-    List.sumBy (function
-        | FileSystemItem.File f -> f.Size
-        | _ -> 0)
-
-let shallowSizes = Map.map (fun _ items -> items |> shallowSize) fileSystem.Items
-
-let rec deepSize (path: Path) (fileSystem: Map<Path,int>): int =
-    let ownSize = fileSystem |> Map.find path
+let solution =
+    input
+    |> List.fold parseLine emptyFileSystem
+    |> fun fs -> fs.Items |> Map.values
+    |> Seq.filter (fun size -> size < 100000)
+    |> Seq.sum
     
-    let children =
-        fileSystem
-        |> Map.filter (fun p _ -> p |> isChildOf path)
-        
-    let childrenSize =
-        children
-        |> Map.map (fun p _ -> deepSize p fileSystem)
-        |> Map.values
-        |> Seq.sum
-    
-    ownSize + childrenSize
-    
-let solution = shallowSizes |> Map.map (fun p _ -> deepSize p shallowSizes)
-
-printfn "%A" solution
+printfn "%d" solution
