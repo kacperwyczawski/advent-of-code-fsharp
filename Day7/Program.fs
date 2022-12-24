@@ -16,12 +16,19 @@ type Path = Path of string list
 
 let goBack path =
     match path with
-    | Path (x :: xs) -> Path xs
+    | Path (_ :: tail) -> Path tail
     | _ -> path
-    
+
 let goTo name path =
     match path with
-    | Path xs -> Path (name :: xs)
+    | Path p -> Path(name :: p)
+    
+let isChildOf parent child =
+    let endsWith (ending: 'a list) (list: 'a list): bool =
+        (list |> List.rev |> List.take (List.length ending) |> List.rev) = ending
+    
+    match parent, child with
+    | Path p, Path c -> c |> endsWith p
 
 type FileSystem =
     { CurrentPath: Path
@@ -29,16 +36,18 @@ type FileSystem =
 
 let addToFileSystem fileSystem path item =
     let items = fileSystem.Items |> Map.tryFind path
+
     let updatedItems =
         match items with
-        | Some items -> items @ [item]
-        | None -> [item]
+        | Some items -> items @ [ item ]
+        | None -> [ item ]
+
     { fileSystem with Items = Map.add path updatedItems fileSystem.Items }
 
 let emptyFileSystem =
     { CurrentPath = Path []
       Items = Map.empty }
-    
+
 // types of lines:
 // $ cd <name>
 // $ ls
@@ -48,12 +57,11 @@ let emptyFileSystem =
 // active patterns
 let (|ChangeDirectory|_|) (str: string) =
     if str.StartsWith "$ cd " then
-        Some (str.Substring 5)
+        Some(str.Substring 5)
     else
         None
 
-let (|ListItems|_|) (str: string) =
-    if str = "$ ls" then Some() else None
+let (|ListItems|_|) (str: string) = if str = "$ ls" then Some() else None
 
 let (|Directory|_|) (str: string) =
     if str.StartsWith("dir ") then
@@ -81,14 +89,34 @@ let processLine fileSystem line =
         else
             { fileSystem with CurrentPath = fileSystem.CurrentPath |> goTo name }
     | ListItems -> fileSystem
-    | Directory dir ->
-        addToFileSystem fileSystem fileSystem.CurrentPath dir
-    | File file ->
-        addToFileSystem fileSystem fileSystem.CurrentPath file
+    | Directory dir -> addToFileSystem fileSystem fileSystem.CurrentPath dir
+    | File file -> addToFileSystem fileSystem fileSystem.CurrentPath file
     | other -> other |> sprintf "Unrecognized command: `%s`" |> failwith
 
-let fileSystem =
-    input
-    |> List.fold processLine emptyFileSystem
+let fileSystem = input |> List.fold processLine emptyFileSystem
+
+let shallowSize =
+    List.sumBy (function
+        | FileSystemItem.File f -> f.Size
+        | _ -> 0)
+
+let shallowSizes = Map.map (fun _ items -> items |> shallowSize) fileSystem.Items
+
+let rec deepSize (path: Path) (fileSystem: Map<Path,int>): int =
+    let ownSize = fileSystem |> Map.find path
     
-printfn "file system: %A" fileSystem
+    let children =
+        fileSystem
+        |> Map.filter (fun p _ -> p |> isChildOf path)
+        
+    let childrenSize =
+        children
+        |> Map.map (fun p _ -> deepSize p fileSystem)
+        |> Map.values
+        |> Seq.sum
+    
+    ownSize + childrenSize
+    
+let solution = shallowSizes |> Map.map (fun p _ -> deepSize p shallowSizes)
+
+printfn "%A" solution
