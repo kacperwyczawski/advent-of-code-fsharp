@@ -4,27 +4,13 @@ open System
 open System.IO
 
 module Input =
-    let private desktopPath =
-        Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+    let private getPath fileName =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), fileName + ".txt")
 
-    let loadLines =
-        [| desktopPath; "input.txt" |]
-        |> Path.Combine
-        |> File.ReadAllLines
-        |> List.ofArray
+    let loadLines = "input" |> getPath |> File.ReadAllLines |> List.ofArray
 
-    let loadTestLines =
-        [| desktopPath; "test.txt" |]
-        |> Path.Combine
-        |> File.ReadAllLines
-        |> List.ofArray
+    let loadTestLines = "test" |> getPath |> File.ReadAllLines |> List.ofArray
 
-    let loadText =
-        [| desktopPath; "input.txt" |]
-        |> Path.Combine
-        |> File.ReadAllText
+    let loadText = "input" |> getPath |> File.ReadAllText
 
-    let loadTestText =
-        [| desktopPath; "test.txt" |]
-        |> Path.Combine
-        |> File.ReadAllText
+    let loadTestText = "test" |> getPath |> File.ReadAllText
