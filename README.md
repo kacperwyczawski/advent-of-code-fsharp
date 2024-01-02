@@ -1,3 +1,3 @@
-# 🎄 [Advent of code F#]
+# 🎄 Advent of code F#
 
 My solutions to [Advent of Code](https://adventofcode.com/)
